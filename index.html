@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Quick Printer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: auto;
+      margin-top: 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      background: green;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: darkgreen;
+    }
+
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>🖨 Quick Printer</h2>
+
+  <form id="uploadForm">
+
+    <label>Select File</label>
+    <input type="file" name="file" required>
+
+    <label>Pages</label>
+    <input
+      type="number"
+      name="pages"
+      placeholder="Enter number of pages"
+      required
+    >
+
+    <label>Copies</label>
+    <input
+      type="number"
+      name="copies"
+      placeholder="Enter number of copies"
+      required
+    >
+
+    <label>Print Type</label>
+    <select name="print_type">
+      <option value="bw">Black & White</option>
+      <option value="color">Color</option>
+    </select>
+
+    <label>Layout</label>
+    <select name="layout">
+      <option value="portrait">Portrait</option>
+      <option value="landscape">Landscape</option>
+    </select>
+
+    <button type="submit">Upload File</button>
+
+  </form>
+
+  <div id="status"></div>
+
+</div>
+
+<script>
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+  // ADD LAYOUT
+  formData.append(
+    "layout",
+    document.querySelector('select[name="layout"]').value
+  );
+
+  const res = await fetch("/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  console.log("UPLOAD:", data);
+
+  if (!data.razorpay_order_id) {
+    alert("Payment setup failed");
+    return;
+  }
+
+  var options = {
+    key: data.key,
+    amount: data.amount * 100,
+    currency: "INR",
+    name: "Quick Printer",
+    order_id: data.razorpay_order_id,
+    prefill: {
+        contact: ""
+    },
+
+    readonly: {
+        contact: false
+    },
+
+   handler: function (response) {
+
+    const paymentId =
+        response.razorpay_payment_id;
+
+    const copies =
+        document.querySelector(
+            '[name="copies"]'
+        ).value;
+
+    const pages =
+        document.querySelector(
+            '[name="pages"]'
+        ).value;
+
+    const layout =
+        document.querySelector(
+            '[name="layout"]'
+        ).value;
+
+    const printType =
+        document.querySelector(
+            '[name="print_type"]'
+        ).value;
+
+    const amount = data.amount;
+
+    document.getElementById(
+        "status"
+    ).innerHTML =
+        "✅ Payment Successful";
+
+    window.location.href =
+        "/success/" +
+        data.order_id +
+        "?payment_id=" +
+        paymentId +
+        "&copies=" +
+        copies +
+        "&pages=" +
+        pages +
+        "&layout=" +
+        layout +
+        "&amount=" +
+        amount +
+        "&print_type=" +
+        printType;
+}
+  };
+
+  var rzp = new Razorpay(options);
+  rzp.open();
+});
+</script>
+
+</body>
+</html>
