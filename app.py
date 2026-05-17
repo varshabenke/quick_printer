@@ -5,9 +5,14 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 import razorpay
 import uuid
 import os
-import win32api
-import win32print
 import time
+import platform
+
+if platform.system() == "Windows":
+
+    import win32api
+    import win32print
+
 from PIL import Image
 from fastapi import Query
 from openpyxl import Workbook, load_workbook
@@ -274,7 +279,9 @@ def success(
     # START PRINTING
     print("AUTO PRINT FILE:", latest_uploaded_file)
 
-    print_file(latest_uploaded_file,copies,print_type)
+    if platform.system() == "Windows":
+
+        print_file(latest_uploaded_file,copies,print_type)
 
     # UPDATE STATUS
     order.status = "printed"
